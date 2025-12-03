@@ -663,9 +663,12 @@ helm repo add mcc "$HELM_REPOSITORY"
 helm repo update mcc
 
 if [[ $VAULT_PROFILE == "local" ]]; then
-    helm install vault mcc/vault --set service.type=NodePort,ui.enabled=true
+    echo "[INFO] Waiting for Vault pods to be ready..."
+    helm install --wait --timeout 300s vault mcc/vault --set service.type=NodePort,ui.enabled=true
+    echo "[INFO] Vault pods are now ready..."
 fi
 
+echo "[INFO] Waiting for MinIO pods to be ready..."
 if [[ $HTTPS_ENABLED == "true" ]]; then
     sudo mkdir -p /etc/nginx/ssl
     aws ssm get-parameter --name "Maestro.ssl-fullchain.credentials" --region $HOME_REGION --with-decryption | jq -r '.Parameter.Value' > fullchain.pem
@@ -676,18 +679,16 @@ if [[ $HTTPS_ENABLED == "true" ]]; then
     sudo mv fullchain.pem /etc/nginx/ssl/
     sudo mv privkey.pem /etc/nginx/ssl/
     sudo chown -R root: /etc/nginx/ssl/
-    helm install minio mcc/minio --set service.type=NodePort,consoleService.type=NodePort,console.enabled=true,httpProtocol=https
+    helm install --wait --timeout 300s minio mcc/minio --set service.type=NodePort,consoleService.type=NodePort,console.enabled=true,httpProtocol=https
 else
-    helm install minio mcc/minio --set service.type=NodePort,consoleService.type=NodePort,console.enabled=true
+    helm install --wait --timeout 300s minio mcc/minio --set service.type=NodePort,consoleService.type=NodePort,console.enabled=true
 fi
-echo "[INFO] Waiting for MinIO pods to be ready..."
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=minio --timeout=300s
-
+echo "[INFO] MinIO pods are now ready..."
 
 if [[ $MONGO_PROFILE == "local" ]]; then
-    helm install mongo mcc/mongo --set service.type=NodePort
     echo "[INFO] Waiting for Mongo pods to be ready..."
-    kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=mongo --timeout=180s
+    helm install --wait --timeout 300s mongo mcc/mongo --set service.type=NodePort
+    echo "[INFO] Mongo pods are now ready..."
 fi
 EOF
 
@@ -848,11 +849,14 @@ EOF
 sudo su - "$FIRST_USER" <<EOF
 set -e
 if [[ $RABBITMQ_PROFILE == "local" ]]; then
-    helm install rabbitmq mcc/rabbitmq
+    echo "[INFO] Waiting for Rabbit pods to be ready..."
+    helm install --wait --timeout 300s rabbitmq mcc/rabbitmq
+    echo "[INFO] Rabbit pods are ready..."
 fi
 
 echo "HELM_VARS: $HELM_VARS"
 echo "MODULAR_VARS: $MODULAR_VARS"
+echo "[INFO] Waiting for Modular and Server pods to be ready..."
 if [[ $RABBITMQ_PROFILE == "external"  ||  $MONGO_PROFILE == "external" ]]; then
     helm install modular-api mcc/modular-api --set "service.type=NodePort,onpremDns=${ONPREM_DNS},${HELM_VARS},${MODULAR_VARS}"
     helm install m3-server mcc/m3-server --set-string springProfilesActive="${SPRING_PROFILES}",m3OnpremS3Host=${ONPREM_DNS},onpremDns=${ONPREM_DNS},${HELM_VARS}
@@ -862,14 +866,16 @@ else
     helm install m3-ui-server mcc/m3-ui-server --set-string springProfilesActive="${SPRING_PROFILES}",onpremDns=$ONPREM_DNS,m3OnpremS3Host=$ONPREM_DNS,m3OnpremS3ExternalUrl=${HTTP_PROTOCOL}://$ONPREM_DNS:9000,${HELM_VARS}
     helm install modular-api mcc/modular-api --set service.type=NodePort,apiHost=m3-server,httpProtocol=$HTTP_PROTOCOL
 fi
-helm install modular-cli mcc/modular-cli
+helm install --wait --timeout 300s modular-cli mcc/modular-cli
+echo "[INFO] Modular and Server pods are now ready..."
+
+echo "[INFO] Waiting for the UI pod to be ready..."
 if [[ $HTTPS_ENABLED == "true" ]]; then
-    helm install ui mcc/ui --set "onpremDns=${ONPREM_DNS},httpProtocol=https"
+    helm install --wait --timeout 300s ui mcc/ui --set "onpremDns=${ONPREM_DNS},httpProtocol=https"
 else
-    helm install ui mcc/ui --set "onpremDns=${ONPREM_DNS},httpProtocol=http"
+    helm install --wait --timeout 300s ui mcc/ui --set "onpremDns=${ONPREM_DNS},httpProtocol=http"
 fi
-echo "[INFO] Waiting for UI pod to be ready..."
-kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=ui --timeout=120s
+echo "[INFO] The UI pod is now ready..."
 
 helm get values ui -o json > "$MAESTRO_WORKING_DIR/maestro-ui-values.json"
 helm get values m3-server -o json > "$MAESTRO_WORKING_DIR/m3-server-values.json"
