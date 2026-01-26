@@ -21,7 +21,6 @@ MINIKUBE_VERSION="${MINIKUBE_VERSION:-v1.33.1}"
 KUBERNETES_VERSION="${KUBERNETES_VERSION:-v1.30.0}"
 KUBECTL_VERSION="${KUBECTL_VERSION:-v1.30.3}"
 HELM_VERSION="${HELM_VERSION:-3.15.4-1}"
-RULE_ENGINE_RELEASE="${RULE_ENGINE_RELEASE:-5.6.0}"
 EFS_DNS="$EFS_FILE_SYSTEM_ID.efs.$HOME_REGION.amazonaws.com"
 EFS_UTILS_VERSION_TAG="${EFS_UTILS_VERSION_TAG:-v2.4.0}"
 
@@ -129,7 +128,7 @@ minikube_ip(){ sudo su "$FIRST_USER" -c "minikube ip --profile maestro"; }
 enable_minikube_service() {
   sudo tee /etc/systemd/system/maestro-minikube.service <<EOF > /dev/null
 [Unit]
-Description=Rule engine minikube start up
+Description=Maestro Cloud Control minikube start up
 After=docker.service
 
 [Service]
@@ -549,7 +548,7 @@ sudo -u "$FIRST_USER" mkdir -p "$(getent passwd "$FIRST_USER" | cut -d: -f6)/.lo
 
 
 log "Script is executed on behalf of $(id)"
-log "The first run. Configuring sre for user $FIRST_USER"
+log "The first run. Configuring Maestro Cloud Control for user $FIRST_USER"
 
 if [ -z "$DO_NOT_ACTIVATE_LICENSE" ]; then
   log "Going to make request to license manager"
