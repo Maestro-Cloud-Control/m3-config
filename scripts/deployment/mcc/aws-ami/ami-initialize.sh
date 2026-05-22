@@ -743,7 +743,7 @@ sudo ln -sf /etc/nginx/sites-available/minio /etc/nginx/sites-enabled/
 sudo ln -sf /etc/nginx/sites-available/minio-console /etc/nginx/sites-enabled/
 sudo systemctl reload nginx
 
-curl "https://dl.min.io/client/mc/release/linux-$(dpkg --print-architecture)/mc" --create-dirs -o $MAESTRO_WORKING_DIR/minio-binaries/mc
+curl -fL "https://dl.min.io/client/mc/release/linux-$(dpkg --print-architecture)/mc" --create-dirs -o $MAESTRO_WORKING_DIR/minio-binaries/mc
 chmod +x $MAESTRO_WORKING_DIR/minio-binaries/mc
 sudo chown -R $FIRST_USER: $MAESTRO_WORKING_DIR/minio-binaries
 minio_user=$(kubectl get secret minio-secret -o jsonpath="{.data.username}" --kubeconfig $MAESTRO_WORKING_DIR/.kube/config | base64 --decode)
