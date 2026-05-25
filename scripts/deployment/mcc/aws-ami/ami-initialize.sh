@@ -777,14 +777,14 @@ if [[ $STORAGE_PROFILE == "local" ]]; then
     $MAESTRO_WORKING_DIR/minio-binaries/mc mb minio/m3-ansible-di-bucket
     $MAESTRO_WORKING_DIR/minio-binaries/mc mb minio/m3-metrics-bucket
     $MAESTRO_WORKING_DIR/minio-binaries/mc mb minio/m3-sdk-keys-bucket
-    $MAESTRO_WORKING_DIR/minio-binaries/mc mb minio/https://$ONPREM_DNS/content
+    $MAESTRO_WORKING_DIR/minio-binaries/mc mb minio/content
 fi
 $MAESTRO_WORKING_DIR/minio-binaries/mc mb minio/m3-public-s3-content
 $MAESTRO_WORKING_DIR/minio-binaries/mc anonymous set download minio/m3-public-s3-content
 $MAESTRO_WORKING_DIR/minio-binaries/mc cp -r $MAESTRO_WORKING_DIR/content minio/m3-public-s3-content/
 $MAESTRO_WORKING_DIR/minio-binaries/mc mb minio/m3-cli-bucket
 $MAESTRO_WORKING_DIR/minio-binaries/mc anonymous set download minio/m3-cli-bucket
-$MAESTRO_WORKING_DIR/minio-binaries/mc cp -r $MAESTRO_WORKING_DIR/m3-cli-minio/* minio/m3-cli-bucket/
+$MAESTRO_WORKING_DIR/minio-binaries/mc cp -r $MAESTRO_WORKING_DIR/m3-cli-minio/* minio/m3-cli-bucket/ || true
 
 minio_m3_cli_bucket_access_policy | sudo tee $MAESTRO_WORKING_DIR/minio_m3_cli_bucket_access_policy.json > /dev/null
 $MAESTRO_WORKING_DIR/minio-binaries/mc policy set $MAESTRO_WORKING_DIR/minio_m3_cli_bucket_access_policy.json minio/m3-cli-bucket
@@ -897,7 +897,6 @@ sudo apt clean
 
 log "Cleaning artifacts"
 if [[ $ENVIRONMENT == "MCC" ]]; then
-    rm $MAESTRO_WORKING_DIR/M3-Operation $MAESTRO_WORKING_DIR/M3-OnPremises $MAESTRO_WORKING_DIR/M3-Billing
     rm $MAESTRO_WORKING_DIR/*.tar
     sudo su - "$FIRST_USER" <<EOF
 set -e
